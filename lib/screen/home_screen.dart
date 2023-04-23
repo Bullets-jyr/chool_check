@@ -23,13 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   // m기준
-  static final double distance = 100;
+  static final double okDistance = 100;
 
   static final Circle withinDistanceCircle = Circle(
     circleId: CircleId('withinDistanceCircle'),
     center: companyLatLng,
     fillColor: Colors.blue.withOpacity(0.5),
-    radius: distance,
+    radius: okDistance,
     strokeColor: Colors.blue,
     strokeWidth: 1,
   );
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     circleId: CircleId('notWithinDistanceCircle'),
     center: companyLatLng,
     fillColor: Colors.red.withOpacity(0.5),
-    radius: distance,
+    radius: okDistance,
     strokeColor: Colors.red,
     strokeWidth: 1,
   );
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     circleId: CircleId('checkDoneCircle'),
     center: companyLatLng,
     fillColor: Colors.green.withOpacity(0.5),
-    radius: distance,
+    radius: okDistance,
     strokeColor: Colors.green,
     strokeWidth: 1,
   );
@@ -61,7 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: renderAppBar(),
-      body: FutureBuilder(
+      // FutureBuilder의 제네릭<>에는 snapshot.data의 타입이 무엇인지를 적어주면 됩니다.
+      body: FutureBuilder<String>(
         // Future를 return해주는 어떤 함수도 넣을 수 있습니다.
         // 함수의 상태가 변경될 때마다 builder를 다시 실행해서 화면을 다시 그려줄 수 있습니다.
         // future안에 들어간 함수가 return해준 값을 snapshot통해서 받아 볼 수 있습니다.
@@ -83,16 +84,41 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           if (snapshot.data == 'Location permission granted.') {
-            return Column(
-              children: [
-                _CustomGoogleMap(
-                  initialPosition: initialPosition,
-                  circle: withinDistanceCircle,
-                  marker: marker,
-                ),
-                _ChoolCheckButton(),
-              ],
-            );
+            return StreamBuilder<Position>(
+                stream: Geolocator.getPositionStream(),
+                builder: (context, snapshot) {
+                  print(snapshot.data);
+                  print(snapshot.data.runtimeType);
+
+                  bool isWithinRange = false;
+
+                  if (snapshot.hasData) {
+                    final start = snapshot.data!;
+                    final end = companyLatLng;
+
+                    final distance = Geolocator.distanceBetween(
+                      start.latitude,
+                      start.longitude,
+                      end.latitude,
+                      end.longitude,
+                    );
+
+                    if (distance < okDistance) {
+                      isWithinRange = true;
+                    }
+                  }
+
+                  return Column(
+                    children: [
+                      _CustomGoogleMap(
+                        initialPosition: initialPosition,
+                        circle: isWithinRange ? withinDistanceCircle : notWithinDistanceCircle,
+                        marker: marker,
+                      ),
+                      _ChoolCheckButton(),
+                    ],
+                  );
+                });
           }
 
           return Center(
