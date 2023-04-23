@@ -9,6 +9,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+// static 키워드를 사용한 변수는 Hot Reload를 해도 바뀌지 않습니다. Hot Restart를 해야 변경됩니다.
 class _HomeScreenState extends State<HomeScreen> {
   // latitude - 위도(가로), longitude - 경도(세로)
   static final LatLng companyLatLng = LatLng(
@@ -19,6 +20,18 @@ class _HomeScreenState extends State<HomeScreen> {
   static final CameraPosition initialPosition = CameraPosition(
     target: companyLatLng,
     zoom: 15,
+  );
+
+  // m기준
+  static final double distance = 100;
+
+  static final Circle circle = Circle(
+    circleId: CircleId('circle'),
+    center: companyLatLng,
+    fillColor: Colors.blue.withOpacity(0.5),
+    radius: distance,
+    strokeColor: Colors.blue,
+    strokeWidth: 1,
   );
 
   @override
@@ -51,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _CustomGoogleMap(
                   initialPosition: initialPosition,
+                  circle: circle,
                 ),
                 _ChoolCheckButton(),
               ],
@@ -110,10 +124,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _CustomGoogleMap extends StatelessWidget {
   final CameraPosition initialPosition;
+  final Circle circle;
 
   const _CustomGoogleMap({
     Key? key,
     required this.initialPosition,
+    required this.circle,
   }) : super(key: key);
 
   @override
@@ -123,6 +139,9 @@ class _CustomGoogleMap extends StatelessWidget {
       child: GoogleMap(
         mapType: MapType.normal,
         initialCameraPosition: initialPosition,
+        myLocationEnabled: true,
+        myLocationButtonEnabled: false,
+        circles: Set.from([circle]),
       ),
     );
   }
