@@ -25,13 +25,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: renderAppBar(),
-      body: Column(
-        children: [
-          _CustomGoogleMap(
-            initialPosition: initialPosition,
-          ),
-          _ChoolCheckButton(),
-        ],
+      body: FutureBuilder(
+        // Future를 return해주는 어떤 함수도 넣을 수 있습니다.
+        // 함수의 상태가 변경될 때마다 builder를 다시 실행해서 화면을 다시 그려줄 수 있습니다.
+        // future안에 들어간 함수가 return해준 값을 snapshot통해서 받아 볼 수 있습니다.
+        future: checkPermission(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          // ConnectionState
+          // none : future파라미터를 사용하지 않았을 경우 입니다.
+          // waiting : future가 로딩 중일 때 입니다. 즉, 함수가 실행 중일 때 입니다.
+          // active : FutureBuilder에서는 사용하지 않습니다. StreamBuilder에서만 사용합니다.
+          // done : 함수가 완전이 끝이 났을 경우 입니다.
+          // 정리하자면, future파라미터의 함수를 실행을 하면서, future함수의 상태가 변경이 될 때마다 계속 builder를 재실행을 해준다는 의미입니다.
+          print(snapshot.connectionState);
+          print(snapshot.data);
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.data == 'Location permission granted.') {
+            return Column(
+              children: [
+                _CustomGoogleMap(
+                  initialPosition: initialPosition,
+                ),
+                _ChoolCheckButton(),
+              ],
+            );
+          }
+
+          return Center(
+            child: Text(
+              snapshot.data,
+            ),
+          );
+        },
       ),
     );
   }
